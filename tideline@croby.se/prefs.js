@@ -14,7 +14,7 @@ export default class TidelinePreferences extends ExtensionPreferences {
         const layout = new Adw.PreferencesGroup({title: _('Layout')});
         page.add(layout);
         layout.add(this._spinRow(settings, 'panel-height', _('Taskbar height'), 24, 96));
-        layout.add(this._spinRow(settings, 'icon-size', _('Icon size'), 16, 64));
+        layout.add(this._spinRow(settings, 'icon-size', _('App icons size'), 16, 64));
         layout.add(this._comboRow(settings, 'clock-position', _('Clock position'),
             [['center', _('Center')], ['right', _('Right')]]));
 
@@ -34,14 +34,14 @@ export default class TidelinePreferences extends ExtensionPreferences {
         const content = new Adw.PreferencesGroup({title: _('Content')});
         page.add(content);
         content.add(this._switchRow(settings, 'show-activities', _('Show Activities button')));
-        content.add(this._switchRow(settings, 'show-apps-button', _('Show app grid button')));
+        content.add(this._switchRow(settings, 'show-apps-button', _('Show App grid button')));
         content.add(this._switchRow(settings, 'show-favorites', _('Show pinned apps')));
         content.add(this._switchRow(settings, 'window-previews',
             _('Show window previews on hover')));
         content.add(this._switchRow(settings, 'isolate-workspaces',
             _('Only show windows on the current workspace')));
         content.add(this._switchRow(settings, 'hide-overview-dash',
-            _('Hide the dash in the overview')));
+            _('Hide the GNOME dash in the overview')));
 
         const monitors = new Adw.PreferencesGroup({title: _('Multiple monitors')});
         page.add(monitors);

@@ -67,7 +67,7 @@
     </key>
     <key name="hide-overview-dash" type="b">
       <default>true</default>
-      <summary>Hide the dash in the overview</summary>
+      <summary>Hide the GNOME dash in the overview</summary>
     </key>
   </schema>
 </schemalist>

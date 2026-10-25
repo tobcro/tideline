@@ -1,7 +1,7 @@
 {
   "uuid": "tideline@croby.se",
   "name": "Tideline",
-  "description": "Combines the top panel and the dash into a single taskbar at the bottom of the screen.",
+  "description": "Tideline combines the top panel and the dash in GNOME into a single taskbar at the bottom of the screen in a no-nonsense style. Suits everyone that comes from Windows and wants a similar workflow without all the bells and whistles.",
   "shell-version": ["51"],
   "settings-schema": "org.gnome.shell.extensions.tideline",
   "url": "https://github.com/tobcro/tideline",
