@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <enum id="org.gnome.shell.extensions.tideline.clock-position">
+    <value nick="center" value="0"/>
+    <value nick="right" value="1"/>
+  </enum>
+  <schema id="org.gnome.shell.extensions.tideline"
+          path="/org/gnome/shell/extensions/tideline/">
+    <key name="panel-height" type="i">
+      <range min="24" max="96"/>
+      <default>48</default>
+      <summary>Height of the taskbar in pixels</summary>
+    </key>
+    <key name="icon-size" type="i">
+      <range min="16" max="64"/>
+      <default>32</default>
+      <summary>Size of application icons</summary>
+    </key>
+    <key name="clock-position" enum="org.gnome.shell.extensions.tideline.clock-position">
+      <default>'right'</default>
+      <summary>Where the clock is placed</summary>
+    </key>
+    <key name="show-activities" type="b">
+      <default>true</default>
+      <summary>Show the Activities button</summary>
+    </key>
+    <key name="show-apps-button" type="b">
+      <default>true</default>
+      <summary>Show the app grid button</summary>
+    </key>
+    <key name="show-favorites" type="b">
+      <default>true</default>
+      <summary>Show pinned (favorite) applications</summary>
+    </key>
+    <key name="window-previews" type="b">
+      <default>true</default>
+      <summary>Show window previews when hovering a running app</summary>
+    </key>
+    <key name="multi-monitor" type="b">
+      <default>true</default>
+      <summary>Show a taskbar on every monitor</summary>
+    </key>
+    <key name="isolate-monitors" type="b">
+      <default>false</default>
+      <summary>Only show windows on the taskbar's own monitor</summary>
+    </key>
+    <key name="isolate-workspaces" type="b">
+      <default>true</default>
+      <summary>Only show windows from the current workspace</summary>
+    </key>
+    <key name="dynamic-opacity" type="b">
+      <default>true</default>
+      <summary>Make the background translucent unless a window is maximized</summary>
+    </key>
+    <key name="background-opacity" type="i">
+      <range min="0" max="100"/>
+      <default>50</default>
+      <summary>Background opacity in percent when no window is maximized</summary>
+    </key>
+    <key name="background-color" type="s">
+      <default>'#000000'</default>
+      <summary>Background colour of the taskbar, as #rrggbb</summary>
+    </key>
+    <key name="overview-transparent" type="b">
+      <default>true</default>
+      <summary>Make the background fully transparent in the overview</summary>
+    </key>
+    <key name="hide-overview-dash" type="b">
+      <default>true</default>
+      <summary>Hide the dash in the overview</summary>
+    </key>
+  </schema>
+</schemalist>

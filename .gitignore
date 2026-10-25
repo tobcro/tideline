@@ -1,0 +1,3 @@
+# Build output
+*.shell-extension.zip
+gschemas.compiled

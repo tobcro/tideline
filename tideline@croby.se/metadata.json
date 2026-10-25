@@ -1,0 +1,9 @@
+{
+  "uuid": "tideline@croby.se",
+  "name": "Tideline",
+  "description": "Combines the top panel and the dash into a single taskbar at the bottom of the screen.",
+  "shell-version": ["51"],
+  "settings-schema": "org.gnome.shell.extensions.tideline",
+  "url": "",
+  "version-name": "0.1"
+}

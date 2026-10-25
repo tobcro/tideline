@@ -1,0 +1,102 @@
+/* The background is painted on the panel box (see background.js), so the
+   panel itself must not draw one. Themes such as Yaru use !important. */
+#panel.tideline-transparent,
+#panel.tideline-transparent:overview {
+  background-color: transparent !important;
+  box-shadow: none;
+  border: none;
+}
+
+.tideline {
+  spacing: 2px;
+  padding: 0 4px;
+}
+
+.tideline-apps {
+  spacing: 2px;
+}
+
+.tideline-app {
+  padding: 0 6px;
+  margin: 3px 0;
+  border-radius: 8px;
+  transition-duration: 100ms;
+}
+
+.tideline-app:hover,
+.tideline-app:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.tideline-app:active,
+.tideline-app:focused {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.tideline-dots {
+  spacing: 3px;
+}
+
+.tideline-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Same size as the other dots, just brighter. */
+.tideline-app:focused .tideline-dot {
+  background-color: #ffffff;
+}
+
+.tideline-drop-placeholder {
+  margin: 6px 4px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Window previews */
+.tideline-previews {
+  spacing: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background-color: rgba(30, 30, 30, 0.95);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.tideline-preview {
+  padding: 6px;
+  border-radius: 10px;
+  color: #ffffff;
+}
+
+.tideline-preview:hover,
+.tideline-preview:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tideline-preview-header {
+  spacing: 6px;
+  padding-bottom: 6px;
+}
+
+.tideline-preview-title {
+  font-size: 0.9em;
+}
+
+.tideline-preview-close {
+  padding: 2px;
+  border-radius: 99px;
+}
+
+.tideline-preview-close StIcon {
+  icon-size: 14px;
+}
+
+.tideline-preview-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.tideline-show-apps StIcon {
+  color: #ffffff;
+}
