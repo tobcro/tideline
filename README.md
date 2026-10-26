@@ -1,47 +1,97 @@
 # Tideline
 
-A GNOME Shell extension (tested on GNOME Shell 51) that merges the top panel
-and the dash into one taskbar at the bottom of the screen.
+**A taskbar. At the bottom. Like nature (and Redmond) intended.**
 
-![Screenshot](docs/screenshot.png)
+Tideline combines the top panel and the dash in GNOME into a single taskbar at
+the bottom of the screen in a no-nonsense style. Suits everyone that comes from
+Windows and wants a similar workflow without all the bells and whistles.
 
-## What it does
+![Tideline on a GNOME desktop](docs/hero.png)
 
-- Moves the top panel to the bottom edge and makes it taller (48 px by default).
-- Puts pinned and running apps in the middle of the panel.
-  - Click: open the app, focus its window, or minimize it if it already has focus.
-    With several windows, each click switches to the next one.
-  - Middle-click or Ctrl+click: open a new window.
-  - Scroll: switch between the app's windows.
-  - Right-click: the usual app menu (pin/unpin, windows, actions).
-  - Dots under the icon show how many windows are open.
-  - Windows minimize into their app's button and grow back out of it.
-  - Hover a running app to see live previews of its windows. Click a preview to
-    switch to it, or use its × to close the window.
-  - Drag pinned apps to reorder them. Dropping a running app or an icon from the
-    app grid among the pinned apps pins it.
-- Adds an app grid button.
-- Moves the clock to the right, next to the system menu.
-- Makes every panel menu (quick settings, calendar, tray icons) open upward.
-- Hides the dash in the overview, since the taskbar replaces it.
-- Background is black (any colour can be picked) and 50% opaque, and turns solid while a maximized window is on
-  that monitor. It becomes fully transparent in the overview.
-- Every other monitor gets its own bar along the bottom with just the apps
-  (no clock, system menus or Activities). It can show all windows, or only the
-  windows on that monitor.
+## Why Tideline?
 
-All of this can be changed in the preferences.
+So you moved from Windows to Linux. Congratulations! Your files are yours, your
+updates ask before rebooting, and nobody is trying to sell you a news feed.
+
+But for the first few weeks your mouse keeps drifting to the bottom of the
+screen, looking for a taskbar that isn't there. GNOME is lovely, it just
+does things *its* way: a bar at the top, a dash that only shows up in the
+overview, and a gentle suggestion that you rethink how you use a computer.
+
+Tideline is for when you would rather not rethink anything. It gives you the
+one thing your muscle memory actually asks for, a plain taskbar along the
+bottom edge, and then stays out of the way.
+
+It is deliberately **lean**:
+
+- No Start menu clone, no widgets panel, no weather you didn't ask for.
+- No theme that turns GNOME into Windows 95 (as tempting as that is).
+- No forty pages of settings. A handful of switches, sensible defaults, done.
+
+## What you get
+
+| Your Windows habit | In Tideline |
+|---|---|
+| Taskbar at the bottom, apps in the middle | ✔ Pinned and running apps, centered |
+| Click an app to switch to it, click again to minimize | ✔ And with several windows, each click moves to the next one |
+| Hover an app to peek at its windows | ✔ Live previews, click to switch, × to close |
+| Drag pinned apps into your favorite order | ✔ Drop a running app among the pins to pin it too |
+| Clock and system icons in the bottom-right corner | ✔ Menus open upward, like they should down here |
+| Windows shrink into the taskbar when minimized | ✔ Straight into their own app's button |
+| A taskbar on every monitor | ✔ Extra monitors get just the apps, no clock clutter |
+| The Start button | Sort of. The app grid button starts things. It just doesn't show ads. |
+
+![Close-up of the taskbar](docs/taskbar.png)
+
+### Previews on hover
+
+Hover a running app and its windows show up as live thumbnails. Click one to
+jump to it, or close it right there.
 
 ![Window previews](docs/previews.png)
 
+### Translucent, until it matters
+
+The bar is see-through when your desktop is on show and turns solid as soon as
+a window is maximized, so nothing looks half-finished. Pick any color you like.
+
+![Translucent bar on top, solid bar with a maximized window below](docs/opacity.png)
+
+### Out of the way in the Overview
+
+Press the Super key and GNOME's Overview still works the GNOME way. Tideline
+fades to fully transparent so your windows get the spotlight, and the dash that
+used to live there is hidden since the taskbar already does its job.
+
+![The GNOME Overview with Tideline](docs/overview.png)
+
+## Settings
+
+Everything has a sensible default, so you can install it and forget about it.
+If you do like to tinker:
+
+- **Layout:** taskbar height, icon size, and whether the clock sits on the right
+  or in the middle.
+- **Background:** color, translucency, solid with maximized windows, fully
+  transparent in the Overview.
+- **Content:** Activities button, app grid button, pinned apps, window previews,
+  windows from the current workspace only, hiding the GNOME dash.
+- **Multiple monitors:** a taskbar on every monitor, optionally showing only
+  that monitor's windows.
+
+<img src="docs/preferences.png" alt="Tideline preferences" width="420">
+
 ## Install
+
+Tideline is tested on GNOME Shell 51.
 
 ```bash
 ./build.sh install
 ```
 
 On Wayland, log out and back in so GNOME Shell sees the new extension. Then turn
-off Ubuntu Dock (or Dash to Dock) and turn this one on:
+off Ubuntu Dock (or Dash to Dock), because two docks at the bottom is one dock
+too many, and turn Tideline on:
 
 ```bash
 gnome-extensions disable ubuntu-dock@ubuntu.com
@@ -69,8 +119,8 @@ Logs: `journalctl -f -o cat /usr/bin/gnome-shell`
 
 ## Not done yet
 
-- The bar does not hide automatically, and there is no keyboard navigation
-  for window previews.
+- The bar does not hide automatically. It is a taskbar, it likes to be seen.
+- No keyboard navigation for window previews yet.
 
 ## License
 
