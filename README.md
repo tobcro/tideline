@@ -6,6 +6,14 @@ Tideline combines the top panel and the dash in GNOME into a single taskbar at
 the bottom of the screen in a no-nonsense style. Suits everyone that comes from
 Windows and wants a similar workflow without all the bells and whistles.
 
+> [!NOTE]
+> **Made with AI.** Tideline was built in collaboration with
+> [Claude Code](https://claude.com/claude-code), Anthropic's AI coding
+> assistant. I came up with the ideas, tried every change on my own desktop and
+> sent it back when it wasn't right; Claude wrote most of the code. If you'd
+> rather keep your desktop free of AI-written code, no hard feelings, this is
+> your exit sign. 👋
+
 ![Tideline on a GNOME desktop](docs/hero.png)
 
 ## Why Tideline?
