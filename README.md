@@ -65,6 +65,17 @@ a window is maximized, so nothing looks half-finished. Pick any color you like.
 
 ![Translucent bar on top, solid bar with a maximized window below](docs/opacity.png)
 
+### One bar, or three zones
+
+Prefer something a little more modern? Turn on **Zones** and the bar splits
+into three rounded, slightly floating islands: Activities on the left, apps in
+the middle, clock on the right. Tweak the roundness, float height, gaps and
+padding to taste. Maximize a window and it quietly turns back into one solid
+bar, because nobody wants to see wallpaper peeking out under their
+spreadsheet.
+
+![The classic single bar on top, Zones below](docs/zones.png)
+
 ### Out of the way in the Overview
 
 Press the Super key and GNOME's Overview still works the GNOME way. Tideline
