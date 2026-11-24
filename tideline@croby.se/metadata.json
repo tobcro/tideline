@@ -5,5 +5,5 @@
   "shell-version": ["51"],
   "settings-schema": "org.gnome.shell.extensions.tideline",
   "url": "https://github.com/tobcro/tideline",
-  "version-name": "0.1.0"
+  "version-name": "0.1.1"
 }
