@@ -61,7 +61,9 @@ jump to it, or close it right there.
 ### Translucent, until it matters
 
 The bar is see-through when your desktop is on show and turns solid as soon as
-a window is maximized, so nothing looks half-finished. Pick any color you like.
+a window is maximized, so nothing looks half-finished. Windows tiled to fill
+the screen between them (say, with Tiling Assistant) count too. Pick any color
+you like.
 
 ![Translucent bar on top, solid bar with a maximized window below](docs/opacity.png)
 

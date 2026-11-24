@@ -1,8 +1,14 @@
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const TRANSITION_MS = 250;
+
+// Uncovered strips this thin or thinner still count as covered, so rounding
+// in tiled layouts (e.g. an odd width split in two) doesn't keep the bar
+// translucent.
+const COVER_TOLERANCE_PX = 2;
 
 const BLACK = {red: 0, green: 0, blue: 0};
 
@@ -24,7 +30,7 @@ export function parseColor(hex, fallback = BLACK) {
 /**
  * Paints the taskbar backgrounds so they can fade between a translucent and
  * a solid colour depending on whether a maximized window is on the same
- * monitor. The primary taskbar's background is drawn on the panel box;
+ * monitor (or windows tiled to fill it). The primary taskbar's background is drawn on the panel box;
  * secondary bars are added with addTarget().
  *
  * With the Zones style, each bar is split into rounded zones (Activities,
@@ -136,6 +142,9 @@ export class DynamicBackground {
             'notify::maximized-vertically', () => this._update(),
             'notify::minimized', () => this._update(),
             'workspace-changed', () => this._update(),
+            // Tiled windows fill the screen without being maximized.
+            'size-changed', () => this._queueUpdate(),
+            'position-changed', () => this._queueUpdate(),
             'unmanaged', () => {
                 window.disconnectObject(this);
                 this._windows.delete(window);
@@ -145,17 +154,67 @@ export class DynamicBackground {
         this._update();
     }
 
-    _hasMaximizedWindow(monitor) {
+    /**
+     * Whether the monitor's work area is filled by windows: one maximized
+     * window, or several (e.g. tiled side by side) that together leave no
+     * gaps.
+     *
+     * @param {number} monitor - the monitor index
+     * @returns {boolean}
+     */
+    _isCovered(monitor) {
         if (this._inOverview)
             return false;
 
         const workspace = global.workspace_manager.get_active_workspace();
-        return [...this._windows].some(w =>
+        const windows = [...this._windows].filter(w =>
             w.get_window_type() === Meta.WindowType.NORMAL &&
-            w.is_maximized() &&
             !w.minimized &&
             w.get_monitor() === monitor &&
             w.located_on_workspace(workspace));
+
+        if (windows.some(w => w.is_maximized()))
+            return true;
+        if (windows.length < 2)
+            return false;
+
+        const area = workspace.get_work_area_for_monitor(monitor);
+        const rects = windows.map(w => w.get_frame_rect());
+        return this._rectsCover(area, rects);
+    }
+
+    _rectsCover(area, rects) {
+        const x1 = area.x, y1 = area.y;
+        const x2 = area.x + area.width, y2 = area.y + area.height;
+        const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+
+        // Split the work area along every window edge; each cell of the
+        // resulting grid is then either entirely inside a window or not.
+        const xs = new Set([x1, x2]);
+        const ys = new Set([y1, y2]);
+        for (const r of rects) {
+            xs.add(clamp(r.x, x1, x2)).add(clamp(r.x + r.width, x1, x2));
+            ys.add(clamp(r.y, y1, y2)).add(clamp(r.y + r.height, y1, y2));
+        }
+        const sortedXs = [...xs].sort((a, b) => a - b);
+        const sortedYs = [...ys].sort((a, b) => a - b);
+
+        for (let i = 0; i < sortedXs.length - 1; i++) {
+            const left = sortedXs[i], right = sortedXs[i + 1];
+            if (right - left <= COVER_TOLERANCE_PX)
+                continue;
+            for (let j = 0; j < sortedYs.length - 1; j++) {
+                const top = sortedYs[j], bottom = sortedYs[j + 1];
+                if (bottom - top <= COVER_TOLERANCE_PX)
+                    continue;
+                const covered = rects.some(r =>
+                    r.x <= left && r.x + r.width >= right &&
+                    r.y <= top && r.y + r.height >= bottom);
+                if (!covered)
+                    return false;
+            }
+        }
+        return true;
     }
 
     _style(opacity) {
@@ -192,6 +251,18 @@ export class DynamicBackground {
         this._update();
     }
 
+    // Moving or resizing a window fires many signals in a row; recompute
+    // once they settle.
+    _queueUpdate() {
+        if (this._updateId)
+            return;
+        this._updateId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._updateId = 0;
+            this._update();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
     _update() {
         const dynamic = this._settings.get_boolean('dynamic-opacity');
         const translucent = this._settings.get_int('background-opacity') / 100;
@@ -205,7 +276,7 @@ export class DynamicBackground {
             let showBorder = false;
             if (this._inOverview && clearInOverview) {
                 // Everything clear, so the overview gets the spotlight.
-            } else if (dynamic && this._hasMaximizedWindow(getMonitor())) {
+            } else if (dynamic && this._isCovered(getMonitor())) {
                 barOpacity = 1;
             } else {
                 const opacity = dynamic ? translucent : 1;
@@ -231,6 +302,10 @@ export class DynamicBackground {
     }
 
     destroy() {
+        if (this._updateId) {
+            GLib.source_remove(this._updateId);
+            this._updateId = 0;
+        }
         for (const window of this._windows)
             window.disconnectObject(this);
         this._windows.clear();
