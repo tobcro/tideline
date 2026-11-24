@@ -13,11 +13,15 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {AppMenu} from 'resource:///org/gnome/shell/ui/appMenu.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import {parseColor} from './background.js';
 import {previews} from './previews.js';
 
 const LABEL_SHOW_DELAY = 300;
 const LABEL_ANIMATION_TIME = 150;
 const MAX_INDICATOR_DOTS = 4;
+const WHITE = {red: 255, green: 255, blue: 255};
+// Dots of apps without focus use the dot colour at this opacity.
+const INACTIVE_DOT_OPACITY = 0.5;
 const DRAG_TIMEOUT_THRESHOLD = 200;
 
 /**
@@ -228,6 +232,11 @@ class TaskbarAppButton extends St.Button {
             for (let i = 0; i < nDots; i++)
                 this._dots.add_child(new St.Widget({style_class: 'tideline-dot'}));
         }
+
+        const {red, green, blue} = this._taskbar.dotColor;
+        const alpha = this.has_style_pseudo_class('focused') ? 1 : INACTIVE_DOT_OPACITY;
+        for (const dot of this._dots.get_children())
+            dot.set_style(`background-color: rgba(${red}, ${green}, ${blue}, ${alpha});`);
 
         const nAll = this.app.get_windows().length;
         this._label.setText(nAll > 1
@@ -440,6 +449,7 @@ class Taskbar extends St.BoxLayout {
 
         this.iconSize = settings.get_int('icon-size');
         this.previewsEnabled = settings.get_boolean('window-previews');
+        this.dotColor = parseColor(settings.get_string('dot-color'), WHITE);
 
         if (showAppsButton && settings.get_boolean('show-apps-button')) {
             this._showApps = new ShowAppsButton(this.iconSize);

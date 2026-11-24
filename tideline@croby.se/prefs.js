@@ -46,12 +46,25 @@ export default class TidelinePreferences extends ExtensionPreferences {
         background.add(opacityRow);
         background.add(this._switchRow(settings, 'overview-transparent',
             _('Fully translucent in Overview')));
+        const borderRow = this._switchRow(settings, 'border', _('Border'));
+        borderRow.subtitle = _('A 1px outline around the taskbar, or around each zone');
+        background.add(borderRow);
+        const borderColorRow = this._colorRow(settings, 'border-color', _('Border color'));
+        settings.bind('border', borderColorRow, 'sensitive', Gio.SettingsBindFlags.GET);
+        background.add(borderColorRow);
+        const borderOpacityRow = this._spinRow(settings, 'border-opacity',
+            _('Border opacity (%)'), 0, 100);
+        settings.bind('border', borderOpacityRow, 'sensitive', Gio.SettingsBindFlags.GET);
+        background.add(borderOpacityRow);
 
         const content = new Adw.PreferencesGroup({title: _('Content')});
         page.add(content);
         content.add(this._switchRow(settings, 'show-activities', _('Show Activities button')));
         content.add(this._switchRow(settings, 'show-apps-button', _('Show App grid button')));
         content.add(this._switchRow(settings, 'show-favorites', _('Show pinned apps')));
+        const dotRow = this._colorRow(settings, 'dot-color', _('Window dots color'));
+        dotRow.subtitle = _('Dots of apps without focus are shown at 50%');
+        content.add(dotRow);
         content.add(this._switchRow(settings, 'window-previews',
             _('Show window previews on hover')));
         content.add(this._switchRow(settings, 'isolate-workspaces',

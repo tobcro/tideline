@@ -4,6 +4,23 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const TRANSITION_MS = 250;
 
+const BLACK = {red: 0, green: 0, blue: 0};
+
+/**
+ * Parse a '#rrggbb' colour, as the preferences write it.
+ *
+ * @param {string} hex - the colour
+ * @param {object} fallback - returned when hex is not a valid colour
+ * @returns {{red: number, green: number, blue: number}}
+ */
+export function parseColor(hex, fallback = BLACK) {
+    const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+    if (!match)
+        return fallback;
+    const [red, green, blue] = match.slice(1).map(h => parseInt(h, 16));
+    return {red, green, blue};
+}
+
 /**
  * Paints the taskbar backgrounds so they can fade between a translucent and
  * a solid colour depending on whether a maximized window is on the same
@@ -21,7 +38,10 @@ const TRANSITION_MS = 250;
 export class DynamicBackground {
     constructor(settings) {
         this._settings = settings;
-        this._color = this._parseColor(settings.get_string('background-color'));
+        this._color = parseColor(settings.get_string('background-color'));
+        this._border = settings.get_boolean('border');
+        this._borderColor = parseColor(settings.get_string('border-color'));
+        this._borderOpacity = settings.get_int('border-opacity') / 100;
         this._windows = new Set();
         this._inOverview = Main.overview.visible;
         this._zones = settings.get_boolean('zones');
@@ -66,16 +86,6 @@ export class DynamicBackground {
             this);
 
         this._update();
-    }
-
-    _parseColor(hex) {
-        // Expects '#rrggbb', as written by the preferences; anything else
-        // falls back to black.
-        const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
-        if (!match)
-            return {red: 0, green: 0, blue: 0};
-        const [red, green, blue] = match.slice(1).map(h => parseInt(h, 16));
-        return {red, green, blue};
     }
 
     /**
@@ -154,7 +164,15 @@ export class DynamicBackground {
             `transition-duration: ${TRANSITION_MS}ms;`;
     }
 
-    _zoneStyle(zone, opacity) {
+    _borderStyle(visible) {
+        // The width stays the same and only the colour fades, so showing or
+        // hiding the border never shifts the layout.
+        const {red, green, blue} = this._borderColor;
+        const alpha = visible ? this._borderOpacity : 0;
+        return ` border: 1px solid rgba(${red}, ${green}, ${blue}, ${alpha});`;
+    }
+
+    _zoneStyle(zone, opacity, showBorder) {
         // The shape comes from the Zones settings, so it is inline rather
         // than in the stylesheet; the outer zones also keep a gap to the
         // screen edges.
@@ -162,7 +180,8 @@ export class DynamicBackground {
         const left = zone.has_style_class_name('tideline-zone-start') ? gap : 0;
         const right = zone.has_style_class_name('tideline-zone-end') ? gap : 0;
         return `${this._style(opacity)} border-radius: ${radius}px; ` +
-            `margin: 0 ${right}px ${float}px ${left}px; padding: 0 ${padding}px;`;
+            `margin: 0 ${right}px ${float}px ${left}px; padding: 0 ${padding}px;` +
+            (this._border ? this._borderStyle(showBorder) : '');
     }
 
     /**
@@ -181,6 +200,9 @@ export class DynamicBackground {
         for (const [actor, {getMonitor, zones}] of this._targets) {
             let barOpacity = 0;
             let zoneOpacity = 0;
+            // The border only shows in the normal state: not in the
+            // overview, and not over a maximized window's solid bar.
+            let showBorder = false;
             if (this._inOverview && clearInOverview) {
                 // Everything clear, so the overview gets the spotlight.
             } else if (dynamic && this._hasMaximizedWindow(getMonitor())) {
@@ -191,13 +213,19 @@ export class DynamicBackground {
                     zoneOpacity = opacity;
                 else
                     barOpacity = opacity;
+                showBorder = true;
             }
 
-            actor.set_style(this._style(barOpacity));
+            // In Zones mode the bar itself never gets a border, so it needs
+            // no border width at all.
+            const barBorder = this._border && zones.length === 0
+                ? this._borderStyle(showBorder) : '';
+            actor.set_style(this._style(barOpacity) + barBorder);
             for (const zone of zones) {
                 // An empty zone (e.g. no Activities button) gets no pill.
                 const empty = !zone.get_children().some(child => child.visible);
-                zone.set_style(this._zoneStyle(zone, empty ? 0 : zoneOpacity));
+                zone.set_style(this._zoneStyle(zone, empty ? 0 : zoneOpacity,
+                    showBorder && !empty));
             }
         }
     }

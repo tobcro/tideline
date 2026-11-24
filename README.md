@@ -95,8 +95,8 @@ If you do like to tinker:
   Activities, apps and the clock, with adjustable roundness, float height,
   edge gaps and padding. A maximized window still gets the plain solid bar.
 - **Background:** color, translucency, solid with maximized windows, fully
-  transparent in the Overview.
-- **Content:** Activities button, app grid button, pinned apps, window previews,
+  transparent in the Overview, and an optional 1px outline with its own color and opacity.
+- **Content:** Activities button, app grid button, pinned apps, window dot color, window previews,
   windows from the current workspace only, hiding the GNOME dash.
 - **Multiple monitors:** a taskbar on every monitor, optionally showing only
   that monitor's windows.

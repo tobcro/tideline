@@ -37,16 +37,12 @@
   spacing: 3px;
 }
 
+/* The colour is set per dot from the dot colour setting (see taskbar.js):
+   full strength for the focused app, half for the others. */
 .tideline-dot {
   width: 4px;
   height: 4px;
   border-radius: 2px;
-  background-color: rgba(255, 255, 255, 0.6);
-}
-
-/* Same size as the other dots, just brighter. */
-.tideline-app:focused .tideline-dot {
-  background-color: #ffffff;
 }
 
 .tideline-drop-placeholder {

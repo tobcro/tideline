@@ -44,9 +44,28 @@
       <default>false</default>
       <summary>Only show windows on the taskbar's own monitor</summary>
     </key>
+    <key name="dot-color" type="s">
+      <default>'#ffffff'</default>
+      <summary>Colour of the open-window dots, as #rrggbb</summary>
+      <description>Full strength for the focused app, 50% for the others.</description>
+    </key>
     <key name="isolate-workspaces" type="b">
       <default>true</default>
       <summary>Only show windows from the current workspace</summary>
+    </key>
+    <key name="border" type="b">
+      <default>false</default>
+      <summary>Draw a 1px border</summary>
+      <description>Around the classic bar, or around each zone. Hidden while a window is maximized.</description>
+    </key>
+    <key name="border-color" type="s">
+      <default>'#ffffff'</default>
+      <summary>Border colour, as #rrggbb</summary>
+    </key>
+    <key name="border-opacity" type="i">
+      <range min="0" max="100"/>
+      <default>50</default>
+      <summary>Border opacity in percent</summary>
     </key>
     <key name="dynamic-opacity" type="b">
       <default>true</default>

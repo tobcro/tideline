@@ -43,8 +43,12 @@ export default class TidelineExtension extends Extension {
 
         this._background = new DynamicBackground(this._settings);
         panel.add_style_class_name('tideline-panel');
+        // A classic-mode border is drawn on the panel box around the panel,
+        // so shrink the panel to keep the whole bar at the chosen height.
+        const classicBorder = this._settings.get_boolean('border') &&
+            !this._settings.get_boolean('zones');
         // Not an inline style: the overview resets Main.panel.style.
-        panel.set_height(this._settings.get_int('panel-height'));
+        panel.set_height(this._settings.get_int('panel-height') - (classicBorder ? 2 : 0));
 
         this._movePanelToBottom();
         this._setupActivities();
