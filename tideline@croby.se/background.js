@@ -10,6 +10,10 @@ const TRANSITION_MS = 250;
  * monitor. The primary taskbar's background is drawn on the panel box;
  * secondary bars are added with addTarget().
  *
+ * With the Zones style, each bar is split into rounded zones (Activities,
+ * apps, clock) that carry the translucent colour while the bar itself stays
+ * clear. A maximized window brings back the single solid bar.
+ *
  * The overview overwrites Main.panel's inline style when it opens and
  * closes, so the colour lives on the panel box instead and the panel itself
  * is made transparent by the stylesheet.
@@ -20,10 +24,17 @@ export class DynamicBackground {
         this._color = this._parseColor(settings.get_string('background-color'));
         this._windows = new Set();
         this._inOverview = Main.overview.visible;
-        // actor -> function returning the monitor index the actor is on
-        this._targets = new Map([
-            [Main.layoutManager.panelBox, () => Main.layoutManager.primaryIndex],
-        ]);
+        this._zones = settings.get_boolean('zones');
+        this._zoneGeometry = {
+            radius: settings.get_int('zone-radius'),
+            float: settings.get_int('zone-float'),
+            gap: settings.get_int('zone-gap'),
+            padding: settings.get_int('zone-padding'),
+        };
+        // bar actor -> {getMonitor, zones}
+        this._targets = new Map();
+        this.addTarget(Main.layoutManager.panelBox, null,
+            [Main.panel._leftBox, Main.panel._centerBox, Main.panel._rightBox]);
 
         Main.panel.add_style_class_name('tideline-transparent');
 
@@ -67,13 +78,42 @@ export class DynamicBackground {
         return {red, green, blue};
     }
 
-    addTarget(actor, monitorIndex) {
-        this._targets.set(actor, () => monitorIndex);
-        this._update();
+    /**
+     * @param {Clutter.Actor} actor - the whole bar
+     * @param {number|null} monitorIndex - its monitor, or null for the primary
+     * @param {Clutter.Actor[]} zones - the bar's zones, left to right
+     */
+    addTarget(actor, monitorIndex, zones = []) {
+        const getMonitor = () => monitorIndex ?? Main.layoutManager.primaryIndex;
+        if (!this._zones)
+            zones = [];
+
+        zones.forEach((zone, i) => {
+            zone.add_style_class_name('tideline-zone');
+            if (i === 0)
+                zone.add_style_class_name('tideline-zone-start');
+            if (i === zones.length - 1)
+                zone.add_style_class_name('tideline-zone-end');
+        });
+
+        this._targets.set(actor, {getMonitor, zones});
+        this.update();
     }
 
     removeTarget(actor) {
+        const target = this._targets.get(actor);
+        if (target)
+            this._clearZones(target.zones);
         this._targets.delete(actor);
+    }
+
+    _clearZones(zones) {
+        for (const zone of zones) {
+            zone.set_style(null);
+            zone.remove_style_class_name('tideline-zone');
+            zone.remove_style_class_name('tideline-zone-start');
+            zone.remove_style_class_name('tideline-zone-end');
+        }
     }
 
     _trackWindow(window) {
@@ -108,24 +148,57 @@ export class DynamicBackground {
             w.located_on_workspace(workspace));
     }
 
+    _style(opacity) {
+        const {red, green, blue} = this._color;
+        return `background-color: rgba(${red}, ${green}, ${blue}, ${opacity}); ` +
+            `transition-duration: ${TRANSITION_MS}ms;`;
+    }
+
+    _zoneStyle(zone, opacity) {
+        // The shape comes from the Zones settings, so it is inline rather
+        // than in the stylesheet; the outer zones also keep a gap to the
+        // screen edges.
+        const {radius, float, gap, padding} = this._zoneGeometry;
+        const left = zone.has_style_class_name('tideline-zone-start') ? gap : 0;
+        const right = zone.has_style_class_name('tideline-zone-end') ? gap : 0;
+        return `${this._style(opacity)} border-radius: ${radius}px; ` +
+            `margin: 0 ${right}px ${float}px ${left}px; padding: 0 ${padding}px;`;
+    }
+
+    /**
+     * Recompute every background. Call it after zones change contents, e.g.
+     * when the Activities button is shown or hidden.
+     */
+    update() {
+        this._update();
+    }
+
     _update() {
         const dynamic = this._settings.get_boolean('dynamic-opacity');
         const translucent = this._settings.get_int('background-opacity') / 100;
-        const {red, green, blue} = this._color;
-
         const clearInOverview = this._settings.get_boolean('overview-transparent');
 
-        for (const [actor, getMonitor] of this._targets) {
-            let opacity;
-            if (this._inOverview && clearInOverview)
-                opacity = 0;
-            else if (!dynamic || this._hasMaximizedWindow(getMonitor()))
-                opacity = 1;
-            else
-                opacity = translucent;
-            actor.set_style(
-                `background-color: rgba(${red}, ${green}, ${blue}, ${opacity}); ` +
-                `transition-duration: ${TRANSITION_MS}ms;`);
+        for (const [actor, {getMonitor, zones}] of this._targets) {
+            let barOpacity = 0;
+            let zoneOpacity = 0;
+            if (this._inOverview && clearInOverview) {
+                // Everything clear, so the overview gets the spotlight.
+            } else if (dynamic && this._hasMaximizedWindow(getMonitor())) {
+                barOpacity = 1;
+            } else {
+                const opacity = dynamic ? translucent : 1;
+                if (zones.length > 0)
+                    zoneOpacity = opacity;
+                else
+                    barOpacity = opacity;
+            }
+
+            actor.set_style(this._style(barOpacity));
+            for (const zone of zones) {
+                // An empty zone (e.g. no Activities button) gets no pill.
+                const empty = !zone.get_children().some(child => child.visible);
+                zone.set_style(this._zoneStyle(zone, empty ? 0 : zoneOpacity));
+            }
         }
     }
 
@@ -137,7 +210,10 @@ export class DynamicBackground {
         global.workspace_manager.disconnectObject(this);
         Main.overview.disconnectObject(this);
 
-        Main.layoutManager.panelBox.set_style(null);
+        for (const [actor, {zones}] of this._targets) {
+            actor.set_style(null);
+            this._clearZones(zones);
+        }
         this._targets.clear();
         Main.panel.remove_style_class_name('tideline-transparent');
     }

@@ -57,6 +57,31 @@
       <default>50</default>
       <summary>Background opacity in percent when no window is maximized</summary>
     </key>
+    <key name="zones" type="b">
+      <default>false</default>
+      <summary>Split the taskbar into three rounded zones</summary>
+      <description>Activities, apps and clock each get their own rounded, slightly raised background. While a window is maximized the taskbar goes back to one solid bar.</description>
+    </key>
+    <key name="zone-radius" type="i">
+      <range min="0" max="30"/>
+      <default>12</default>
+      <summary>Corner roundness of the zones in pixels</summary>
+    </key>
+    <key name="zone-float" type="i">
+      <range min="0" max="16"/>
+      <default>4</default>
+      <summary>How far the zones float above the bottom edge in pixels</summary>
+    </key>
+    <key name="zone-gap" type="i">
+      <range min="0" max="64"/>
+      <default>4</default>
+      <summary>Gap between the outer zones and the screen edges in pixels</summary>
+    </key>
+    <key name="zone-padding" type="i">
+      <range min="0" max="32"/>
+      <default>6</default>
+      <summary>Space inside each zone, left and right, in pixels</summary>
+    </key>
     <key name="background-color" type="s">
       <default>'#000000'</default>
       <summary>Background colour of the taskbar, as #rrggbb</summary>

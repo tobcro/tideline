@@ -18,6 +18,22 @@ export default class TidelinePreferences extends ExtensionPreferences {
         layout.add(this._comboRow(settings, 'clock-position', _('Clock position'),
             [['center', _('Center')], ['right', _('Right')]]));
 
+        const zones = new Adw.PreferencesGroup({title: _('Zones')});
+        page.add(zones);
+        const zonesRow = this._switchRow(settings, 'zones', _('Zones'));
+        zonesRow.subtitle = _('Split the taskbar into rounded zones for Activities, apps and the clock');
+        zones.add(zonesRow);
+        for (const [key, title, upper] of [
+            ['zone-radius', _('Roundness (px)'), 30],
+            ['zone-float', _('Float height (px)'), 16],
+            ['zone-gap', _('Gap to screen edges (px)'), 64],
+            ['zone-padding', _('Padding (px)'), 32],
+        ]) {
+            const row = this._spinRow(settings, key, title, 0, upper, 1);
+            settings.bind('zones', row, 'sensitive', Gio.SettingsBindFlags.GET);
+            zones.add(row);
+        }
+
         const background = new Adw.PreferencesGroup({title: _('Background')});
         page.add(background);
         background.add(this._colorRow(settings, 'background-color', _('Color')));
@@ -59,10 +75,10 @@ export default class TidelinePreferences extends ExtensionPreferences {
         return row;
     }
 
-    _spinRow(settings, key, title, lower, upper) {
+    _spinRow(settings, key, title, lower, upper, step = 2) {
         const row = new Adw.SpinRow({
             title,
-            adjustment: new Gtk.Adjustment({lower, upper, step_increment: 2}),
+            adjustment: new Gtk.Adjustment({lower, upper, step_increment: step}),
         });
         settings.bind(key, row, 'value', Gio.SettingsBindFlags.DEFAULT);
         return row;

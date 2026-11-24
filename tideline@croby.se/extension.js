@@ -67,6 +67,10 @@ export default class TidelineExtension extends Extension {
 
         this._setupOverviewDash();
 
+        // Zones skip empty boxes, so recheck now that Activities and the
+        // clock are where the settings want them.
+        this._background.update();
+
         this._secondaryBars = [];
         this._setupSecondaryBars();
 
@@ -116,7 +120,7 @@ export default class TidelineExtension extends Extension {
             if (i === primaryIndex)
                 continue;
             const bar = new SecondaryBar(this._settings, i);
-            this._background.addTarget(bar, i);
+            this._background.addTarget(bar, i, [bar.taskbar]);
             this._secondaryBars.push(bar);
         }
     }

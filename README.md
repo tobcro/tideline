@@ -80,6 +80,9 @@ If you do like to tinker:
 
 - **Layout:** taskbar height, icon size, and whether the clock sits on the right
   or in the middle.
+- **Zones:** split the bar into three rounded, slightly floating zones for
+  Activities, apps and the clock, with adjustable roundness, float height,
+  edge gaps and padding. A maximized window still gets the plain solid bar.
 - **Background:** color, translucency, solid with maximized windows, fully
   transparent in the Overview.
 - **Content:** Activities button, app grid button, pinned apps, window previews,

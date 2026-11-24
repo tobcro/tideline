@@ -36,6 +36,10 @@ class SecondaryBar extends St.Widget {
         this._place();
     }
 
+    get taskbar() {
+        return this._taskbar;
+    }
+
     _place() {
         const monitor = Main.layoutManager.monitors[this.monitorIndex];
         if (!monitor)
