@@ -4,6 +4,7 @@ import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+import {settingsMenu} from './settingsMenu.js';
 import {Taskbar} from './taskbar.js';
 
 /**
@@ -27,6 +28,7 @@ class SecondaryBar extends St.Widget {
         this._taskbar.x_align = Clutter.ActorAlign.CENTER;
         this._taskbar.x_expand = true;
         this.add_child(this._taskbar);
+        settingsMenu.addTo(this);
 
         // Chrome is untracked automatically when the actor is destroyed.
         Main.layoutManager.addChrome(this, {

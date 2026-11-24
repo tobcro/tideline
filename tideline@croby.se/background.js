@@ -113,6 +113,8 @@ export class DynamicBackground {
         });
 
         this._targets.set(actor, {getMonitor, zones});
+        // The shell may destroy a bar itself, e.g. while shutting down.
+        actor.connectObject('destroy', () => this._targets.delete(actor), this);
         this.update();
     }
 
@@ -120,6 +122,7 @@ export class DynamicBackground {
         const target = this._targets.get(actor);
         if (target)
             this._clearZones(target.zones);
+        actor.disconnectObject(this);
         this._targets.delete(actor);
     }
 
@@ -314,6 +317,7 @@ export class DynamicBackground {
         Main.overview.disconnectObject(this);
 
         for (const [actor, {zones}] of this._targets) {
+            actor.disconnectObject(this);
             actor.set_style(null);
             this._clearZones(zones);
         }

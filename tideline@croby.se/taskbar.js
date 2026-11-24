@@ -15,6 +15,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {parseColor} from './background.js';
 import {previews} from './previews.js';
+import {settingsMenu} from './settingsMenu.js';
 
 const LABEL_SHOW_DELAY = 300;
 const LABEL_ANIMATION_TIME = 150;
@@ -400,7 +401,23 @@ class ShowAppsButton extends St.Button {
         this.set_child(this._icon);
         this._label = new HoverLabel(this, _('Show Apps'));
         this.setIconSize(iconSize);
+
+        // Like the Start button on Windows, a right-click offers settings.
+        const rightClick = new Clutter.ClickGesture({
+            required_button: Clutter.BUTTON_SECONDARY,
+            recognize_on_press: true,
+        });
+        rightClick.connect('recognize', () => this.popupMenu());
+        this.add_action(rightClick);
+        this.connect('popup-menu', () => this.popupMenu());
+
         this.connect('destroy', () => this._label.destroy());
+    }
+
+    popupMenu() {
+        this._label.hide();
+        settingsMenu.openFor(this);
+        return Clutter.EVENT_STOP;
     }
 
     setIconSize(size) {

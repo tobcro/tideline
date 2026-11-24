@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 
@@ -8,6 +9,7 @@ import {ExtensionState} from 'resource:///org/gnome/shell/misc/extensionUtils.js
 import {DynamicBackground} from './background.js';
 import {previews} from './previews.js';
 import {SecondaryBar} from './secondaryBar.js';
+import {settingsMenu} from './settingsMenu.js';
 import {Taskbar} from './taskbar.js';
 
 const CONFLICTING_EXTENSIONS = [
@@ -70,6 +72,19 @@ export default class TidelineExtension extends Extension {
             });
 
         this._setupOverviewDash();
+        this._setupOverviewSpace();
+
+        // Right-click on empty taskbar space opens a menu with our settings.
+        settingsMenu.init(() => this.openPreferences());
+        for (const actor of this._settingsMenuTargets())
+            settingsMenu.addTo(actor);
+        // The panel's window-drag gesture reacts to any button and would
+        // swallow the right-click; dragging windows only needs the left one.
+        const windowDrag = panel._clickGesture;
+        if (windowDrag) {
+            this._windowDragButton = windowDrag.required_button;
+            windowDrag.required_button = Clutter.BUTTON_PRIMARY;
+        }
 
         // Zones skip empty boxes, so recheck now that Activities and the
         // clock are where the settings want them.
@@ -96,6 +111,12 @@ export default class TidelineExtension extends Extension {
             this._setMenuSide(indicator, St.Side.TOP);
 
         previews.close();
+        for (const actor of this._settingsMenuTargets())
+            settingsMenu.removeFrom(actor);
+        settingsMenu.destroy();
+        if (this._windowDragButton !== undefined && panel._clickGesture)
+            panel._clickGesture.required_button = this._windowDragButton;
+        delete this._windowDragButton;
         this._destroySecondaryBars();
         this._taskbar?.destroy();
         this._taskbar = null;
@@ -103,6 +124,7 @@ export default class TidelineExtension extends Extension {
         this._restoreClock();
         panel.statusArea.activities?.container.show();
         this._restoreOverviewDash();
+        this._restoreOverviewSpace();
 
         this._background?.destroy();
         this._background = null;
@@ -112,6 +134,13 @@ export default class TidelineExtension extends Extension {
         // Put the panel and its pointer barrier back where the shell wants them.
         layoutManager._updateBoxes();
         layoutManager._updatePanelBarrier();
+    }
+
+    _settingsMenuTargets() {
+        // The boxes are reactive too, so clicks between their children
+        // target them rather than the panel.
+        const panel = Main.panel;
+        return [panel, panel._leftBox, panel._centerBox, panel._rightBox];
     }
 
     _setupSecondaryBars() {
@@ -241,6 +270,23 @@ export default class TidelineExtension extends Extension {
         dash.opacity = 255;
         dash.reactive = true;
         dash.set_clip_to_allocation(false);
+    }
+
+    _setupOverviewSpace() {
+        // The overview lays itself out from the top of the work area down to
+        // the bottom of the screen, so it would run in under the taskbar.
+        // Padding its controls lifts the search, windows and app grid clear.
+        const controls = Main.overview._overview?._controls;
+        if (!controls)
+            return;
+
+        this._overviewControls = controls;
+        controls.set_style(`padding-bottom: ${this._settings.get_int('panel-height')}px;`);
+    }
+
+    _restoreOverviewSpace() {
+        this._overviewControls?.set_style(null);
+        this._overviewControls = null;
     }
 
     _setMenuSide(indicator, side) {

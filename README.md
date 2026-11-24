@@ -81,15 +81,17 @@ spreadsheet.
 ### Out of the way in the Overview
 
 Press the Super key and GNOME's Overview still works the GNOME way. Tideline
-fades to fully transparent so your windows get the spotlight, and the dash that
-used to live there is hidden since the taskbar already does its job.
+fades to fully transparent so your windows get the spotlight, the Overview
+moves up to make room for it, and the dash that used to live there is hidden
+since the taskbar already does its job.
 
 ![The GNOME Overview with Tideline](docs/overview.png)
 
 ## Settings
 
 Everything has a sensible default, so you can install it and forget about it.
-If you do like to tinker:
+If you do like to tinker, right-click an empty spot on the taskbar (or the app
+grid button) and choose **Tideline Settings**:
 
 - **Layout:** taskbar height, icon size, and whether the clock sits on the right
   or in the middle.
