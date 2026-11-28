@@ -24,6 +24,11 @@
       <default>true</default>
       <summary>Show the Activities button</summary>
     </key>
+    <key name="show-user-button" type="b">
+      <default>true</default>
+      <summary>Show the user button</summary>
+      <description>A round button with the user's picture at the very left, with a menu to edit the profile, suspend, restart, power off or log out.</description>
+    </key>
     <key name="show-apps-button" type="b">
       <default>true</default>
       <summary>Show the app grid button</summary>

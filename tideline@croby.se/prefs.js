@@ -59,6 +59,7 @@ export default class TidelinePreferences extends ExtensionPreferences {
 
         const content = new Adw.PreferencesGroup({title: _('Content')});
         page.add(content);
+        content.add(this._switchRow(settings, 'show-user-button', _('Show user button')));
         content.add(this._switchRow(settings, 'show-activities', _('Show Activities button')));
         content.add(this._switchRow(settings, 'show-apps-button', _('Show App grid button')));
         content.add(this._switchRow(settings, 'show-favorites', _('Show pinned apps')));

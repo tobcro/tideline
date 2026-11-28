@@ -118,6 +118,23 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* The user button's picture, or the default avatar, as a circle. */
+.tideline-user-button {
+  -natural-hpadding: 6px;
+  -minimum-hpadding: 4px;
+}
+
+.tideline-avatar {
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* Without a picture, the default avatar icon sits inset in its circle. */
+.tideline-avatar StIcon {
+  padding: 3px;
+}
+
 .tideline-show-apps StIcon {
   color: #ffffff;
 }

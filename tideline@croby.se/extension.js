@@ -11,6 +11,7 @@ import {previews} from './previews.js';
 import {SecondaryBar} from './secondaryBar.js';
 import {settingsMenu} from './settingsMenu.js';
 import {Taskbar} from './taskbar.js';
+import {UserMenuButton} from './userMenu.js';
 import {ZoneOverflow} from './zoneOverflow.js';
 
 const CONFLICTING_EXTENSIONS = [
@@ -74,6 +75,9 @@ export default class TidelineExtension extends Extension {
                 return indicator;
             });
 
+        // After the override above, so its menu pops up like the others.
+        this._setupUserMenu();
+
         this._setupOverviewDash();
         this._setupOverviewSpace();
 
@@ -126,6 +130,8 @@ export default class TidelineExtension extends Extension {
         this._taskbar?.destroy();
         this._taskbar = null;
 
+        this._userMenu?.destroy();
+        this._userMenu = null;
         this._restoreClock();
         panel.statusArea.activities?.container.show();
         this._restoreOverviewDash();
@@ -223,6 +229,15 @@ export default class TidelineExtension extends Extension {
         const activities = Main.panel.statusArea.activities?.container;
         if (activities)
             activities.visible = this._settings.get_boolean('show-activities');
+    }
+
+    _setupUserMenu() {
+        if (!this._settings.get_boolean('show-user-button'))
+            return;
+
+        // At the very start of the left zone, before Activities.
+        this._userMenu = new UserMenuButton(this._settings);
+        Main.panel.addToStatusArea('tideline-user-menu', this._userMenu, 0, 'left');
     }
 
     _setupClock() {
