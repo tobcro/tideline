@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <enum id="org.gnome.shell.extensions.tideline.clock-position">
-    <value nick="center" value="0"/>
-    <value nick="right" value="1"/>
-  </enum>
   <schema id="org.gnome.shell.extensions.tideline"
           path="/org/gnome/shell/extensions/tideline/">
     <key name="panel-height" type="i">
@@ -15,10 +11,6 @@
       <range min="16" max="64"/>
       <default>32</default>
       <summary>Size of application icons</summary>
-    </key>
-    <key name="clock-position" enum="org.gnome.shell.extensions.tideline.clock-position">
-      <default>'right'</default>
-      <summary>Where the clock is placed</summary>
     </key>
     <key name="show-activities" type="b">
       <default>true</default>

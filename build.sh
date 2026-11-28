@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pack the extension into a zip, and with "install" also install it for
 # this user. Every .js file besides extension.js and prefs.js is included
-# automatically.
+# automatically, and so is the icons folder.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -13,6 +13,9 @@ for f in "$UUID"/*.js; do
     [[ $name == extension.js || $name == prefs.js ]] && continue
     extra+=("--extra-source=$name")
 done
+
+# Folders such as the About page's icon go in whole.
+extra+=("--extra-source=icons")
 
 gnome-extensions pack --force "${extra[@]}" "$UUID"
 echo "Packed $UUID.shell-extension.zip"

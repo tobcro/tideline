@@ -241,8 +241,9 @@ export default class TidelineExtension extends Extension {
     }
 
     _setupClock() {
+        // The clock always sits in the right zone, like on Windows.
         const clock = Main.panel.statusArea.dateMenu?.container;
-        if (!clock || this._settings.get_string('clock-position') !== 'right')
+        if (!clock)
             return;
 
         const parent = clock.get_parent();
