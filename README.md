@@ -34,7 +34,7 @@ It is deliberately **lean**:
 
 - No Start menu clone, no widgets panel, no weather you didn't ask for.
 - No theme that turns GNOME into Windows 95 (as tempting as that is).
-- No forty pages of settings. A handful of switches, sensible defaults, done.
+- No forty pages of settings. Three tidy tabs, sensible defaults, done.
 
 ## What you get
 
@@ -47,6 +47,8 @@ It is deliberately **lean**:
 | Clock and system icons in the bottom-right corner | ✔ Menus open upward, like they should down here |
 | Windows shrink into the taskbar when minimized | ✔ Straight into their own app's button |
 | A taskbar on every monitor | ✔ Extra monitors get just the apps, no clock clutter |
+| "Show hidden icons" when the tray fills up | ✔ A crowded bar tucks the system icons behind an arrow next to the clock, and a long row of apps scrolls instead of spilling over |
+| Your picture, power and sign-out in the Start menu | ✔ A round user button on the far left: edit your profile, suspend, restart, power off or log out |
 | The Start button | Sort of. The app grid button starts things. It just doesn't show ads. |
 
 ![Close-up of the taskbar](docs/taskbar.png)
@@ -57,6 +59,26 @@ Hover a running app and its windows show up as live thumbnails. Click one to
 jump to it, or close it right there.
 
 ![Window previews](docs/previews.png)
+
+### Room for everything
+
+Twenty apps open and a tray full of extension icons? Tideline keeps the three
+parts of the bar from ever running into each other. When it gets crowded, the
+right side folds down to just the clock and an arrow, like "Show hidden icons"
+on Windows; click the arrow to bring the icons back. The apps in the middle get
+all the room that's left, and when even that isn't enough, the row scrolls:
+use the arrows at its ends or your mouse wheel. The app you switch to always
+scrolls into view.
+
+![A crowded taskbar folding the tray behind an arrow and scrolling its apps](docs/overflow.gif)
+
+### You, and the power button
+
+Your picture sits in the bottom-left corner, roughly where Windows puts its
+Start button. Click it to edit your profile, or to suspend, restart, power off
+or log out, without digging through the system menu.
+
+![The user menu with Edit Profile, Suspend, Restart, Power Off and Log Out](docs/user-menu.gif)
 
 ### Translucent, until it matters
 
@@ -70,8 +92,8 @@ you like.
 ### One bar, or three zones
 
 Prefer something a little more modern? Turn on **Zones** and the bar splits
-into three rounded, slightly floating islands: Activities on the left, apps in
-the middle, clock on the right. Tweak the roundness, float height, gaps and
+into three rounded, slightly floating islands: your picture and Activities on
+the left, apps in the middle, clock on the right. Tweak the roundness, float height, gaps and
 padding to taste. Maximize a window and it quietly turns back into one solid
 bar, because nobody wants to see wallpaper peeking out under their
 spreadsheet.
@@ -91,25 +113,34 @@ since the taskbar already does its job.
 
 Everything has a sensible default, so you can install it and forget about it.
 If you do like to tinker, right-click an empty spot on the taskbar (or the app
-grid button) and choose **Tideline Settings**:
+grid button) and choose **Tideline Settings**. Options that come with extra
+knobs keep them folded away until you switch them on.
 
-- **Layout:** taskbar height, icon size, and whether the clock sits on the right
-  or in the middle.
-- **Zones:** split the bar into three rounded, slightly floating zones for
-  Activities, apps and the clock, with adjustable roundness, float height,
-  edge gaps and padding. A maximized window still gets the plain solid bar.
-- **Background:** color, translucency, solid with maximized windows, fully
-  transparent in the Overview, and an optional 1px outline with its own color and opacity.
-- **Content:** Activities button, app grid button, pinned apps, window dot color, window previews,
-  windows from the current workspace only, hiding the GNOME dash.
-- **Multiple monitors:** a taskbar on every monitor, optionally showing only
-  that monitor's windows.
+- **Appearance:** taskbar height and icon size; background color, translucency
+  (solid with maximized windows) and full transparency in the Overview;
+  **Zones** with adjustable roundness, float height, edge gaps and padding;
+  an optional 1px **Border** with its own color and opacity.
+- **Taskbar:** the user, Activities and app grid buttons; pinned apps, window
+  previews, windows from the current workspace only and the window dot color;
+  a taskbar on every monitor, optionally with only that monitor's windows;
+  hiding the GNOME dash in the Overview.
+- **About:** the version you're running, plus links to this page, the issue
+  tracker and the license.
 
-<img src="docs/preferences.png" alt="Tideline preferences" width="420">
+<img src="docs/settings.gif" alt="Tideline Settings: the Appearance tab with Zones folding open, then the Taskbar and About tabs" width="420">
 
 ## Install
 
 Tideline is tested on GNOME Shell 51.
+
+Grab `tideline@croby.se.shell-extension.zip` from the
+[latest release](https://github.com/tobcro/tideline/releases/latest) and install it:
+
+```bash
+gnome-extensions install --force tideline@croby.se.shell-extension.zip
+```
+
+Or build it from a clone of this repository:
 
 ```bash
 ./build.sh install
