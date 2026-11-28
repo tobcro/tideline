@@ -11,6 +11,7 @@ import {previews} from './previews.js';
 import {SecondaryBar} from './secondaryBar.js';
 import {settingsMenu} from './settingsMenu.js';
 import {Taskbar} from './taskbar.js';
+import {ZoneOverflow} from './zoneOverflow.js';
 
 const CONFLICTING_EXTENSIONS = [
     'ubuntu-dock@ubuntu.com',
@@ -58,6 +59,8 @@ export default class TidelineExtension extends Extension {
 
         this._taskbar = new Taskbar(this._settings);
         panel._centerBox.insert_child_at_index(this._taskbar, 0);
+        // Keep the zones apart when the bar fills up.
+        this._zoneOverflow = new ZoneOverflow(this._settings, this._taskbar);
 
         // Panel menus normally drop down; make them pop up instead, including
         // for indicators that other extensions add later.
@@ -118,6 +121,8 @@ export default class TidelineExtension extends Extension {
             panel._clickGesture.required_button = this._windowDragButton;
         delete this._windowDragButton;
         this._destroySecondaryBars();
+        this._zoneOverflow?.destroy();
+        this._zoneOverflow = null;
         this._taskbar?.destroy();
         this._taskbar = null;
 

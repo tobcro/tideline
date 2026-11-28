@@ -24,6 +24,11 @@ const WHITE = {red: 255, green: 255, blue: 255};
 // Dots of apps without focus use the dot colour at this opacity.
 const INACTIVE_DOT_OPACITY = 0.5;
 const DRAG_TIMEOUT_THRESHOLD = 200;
+const SCROLL_ANIMATION_TIME = 150;
+// Pixels per unit of touchpad scroll delta; a wheel notch moves one button.
+const SMOOTH_SCROLL_PX = 24;
+// While dragging an icon near an edge of a scrolled row, nudge it this far.
+const DRAG_SCROLL_PX = 12;
 
 /**
  * Small tooltip shown above a taskbar button while it is hovered.
@@ -330,6 +335,11 @@ class TaskbarAppButton extends St.Button {
     }
 
     _onScroll(event) {
+        // While the row scrolls, the wheel scrolls it rather than cycling
+        // through the app's windows.
+        if (this._taskbar.overflowing)
+            return Clutter.EVENT_PROPAGATE;
+
         const windows = this.getWindows();
         if (windows.length < 2)
             return Clutter.EVENT_PROPAGATE;
@@ -436,11 +446,33 @@ class ShowAppsButton extends St.Button {
 });
 
 /**
+ * Arrow at either end of the app row that scrolls it when the apps don't fit.
+ */
+const ScrollArrow = GObject.registerClass(
+class ScrollArrow extends St.Button {
+    _init(iconName) {
+        super._init({
+            style_class: 'tideline-scroll-arrow',
+            reactive: false,
+            can_focus: false,
+            track_hover: true,
+            y_expand: true,
+            opacity: 0,
+            child: new St.Icon({icon_name: iconName}),
+        });
+    }
+});
+
+/**
  * The row of application buttons. The primary taskbar lives inside the
  * panel; secondary monitors get one each, without the app grid button.
+ *
+ * When the apps don't fit in the space the taskbar gets (see setMaxWidth()
+ * and ZoneOverflow), the row scrolls: arrows appear at its ends, and the
+ * mouse wheel or touchpad scroll it too.
  */
 export const Taskbar = GObject.registerClass(
-class Taskbar extends St.BoxLayout {
+class Taskbar extends St.Widget {
     /**
      * @param {Gio.Settings} settings - the extension's settings
      * @param {object} params
@@ -451,6 +483,8 @@ class Taskbar extends St.BoxLayout {
     _init(settings, {monitorIndex = null, showAppsButton = true} = {}) {
         super._init({
             style_class: 'tideline',
+            // Reactive so the wheel scrolls the row between buttons too.
+            reactive: true,
             y_expand: true,
         });
 
@@ -463,6 +497,11 @@ class Taskbar extends St.BoxLayout {
         this._dropPlaceholder = null;
         this._dropPos = -1;
         this._dragMonitor = null;
+        this._maxWidth = -1;
+        this._overflowing = false;
+        this._scrollTarget = null;
+        this._focusApp = null;
+        this._revealLaterId = 0;
 
         this.iconSize = settings.get_int('icon-size');
         this.previewsEnabled = settings.get_boolean('window-previews');
@@ -475,7 +514,32 @@ class Taskbar extends St.BoxLayout {
 
         this._appBox = new St.BoxLayout({style_class: 'tideline-apps'});
         this._appBox._delegate = this;
-        this.add_child(this._appBox);
+        this._scrollView = new St.ScrollView({
+            style_class: 'tideline-scroll',
+            hscrollbar_policy: St.PolicyType.EXTERNAL,
+            vscrollbar_policy: St.PolicyType.NEVER,
+            overlay_scrollbars: true,
+            enable_mouse_scrolling: false,
+            reactive: false,
+            y_expand: true,
+            child: this._appBox,
+        });
+        this.add_child(this._scrollView);
+
+        const rtl = this.get_text_direction() === Clutter.TextDirection.RTL;
+        this._prevArrow = new ScrollArrow(rtl ? 'pan-end-symbolic' : 'pan-start-symbolic');
+        this._nextArrow = new ScrollArrow(rtl ? 'pan-start-symbolic' : 'pan-end-symbolic');
+        this._prevArrow.connect('clicked', () => this._scrollPage(-1));
+        this._nextArrow.connect('clicked', () => this._scrollPage(1));
+        this.add_child(this._prevArrow);
+        this.add_child(this._nextArrow);
+
+        this._scrollView.hadjustment.connectObject(
+            'notify::value', () => this._syncArrows(),
+            'changed', () => this._syncArrows(),
+            this);
+        this.connect('scroll-event', (_actor, event) => this._onScroll(event));
+        settingsMenu.addTo(this);
 
         const queue = () => this._queueRedisplay();
         const appSystem = Shell.AppSystem.get_default();
@@ -503,6 +567,225 @@ class Taskbar extends St.BoxLayout {
 
         this.connect('destroy', () => this._onDestroy());
         this._redisplay();
+    }
+
+    /**
+     * Cap the taskbar's natural width; the apps scroll beyond it.
+     *
+     * @param {number} width - the most it may take, or -1 for no limit
+     */
+    setMaxWidth(width) {
+        if (width === this._maxWidth)
+            return;
+        this._maxWidth = width;
+        this.queue_relayout();
+    }
+
+    /**
+     * @returns {boolean} whether the apps don't fit and the row scrolls
+     */
+    get overflowing() {
+        return this._overflowing;
+    }
+
+    /**
+     * @returns {number} the width the taskbar needs to show every app
+     */
+    get fullWidth() {
+        const {lead, apps} = this._widths();
+        return this.get_theme_node().adjust_preferred_width(0, lead + apps)[1];
+    }
+
+    _widths() {
+        const spacing = this.get_theme_node().get_length('spacing');
+        const showApps = this._showApps?.visible
+            ? this._showApps.get_preferred_width(-1)[1] : 0;
+        return {
+            spacing,
+            lead: showApps ? showApps + spacing : 0,
+            apps: this._scrollView.get_preferred_width(-1)[1],
+            arrow: this._prevArrow.get_preferred_width(-1)[1],
+        };
+    }
+
+    vfunc_get_preferred_width(forHeight) {
+        const node = this.get_theme_node();
+        node.adjust_for_height(forHeight);
+        const {spacing, lead, apps, arrow} = this._widths();
+
+        // At the least, both arrows and one app button.
+        const button = this._appBox.get_first_child()?.get_preferred_width(-1)[1] ?? 0;
+        const min = lead + Math.min(apps, 2 * (arrow + spacing) + button);
+        let [minWidth, natWidth] = node.adjust_preferred_width(min, lead + apps);
+        if (this._maxWidth >= 0)
+            natWidth = Math.max(minWidth, Math.min(natWidth, this._maxWidth));
+        return [minWidth, natWidth];
+    }
+
+    vfunc_get_preferred_height(forWidth) {
+        const node = this.get_theme_node();
+        node.adjust_for_width(forWidth);
+        let min = 0, nat = 0;
+        for (const child of this.get_children()) {
+            const [childMin, childNat] = child.get_preferred_height(-1);
+            min = Math.max(min, childMin);
+            nat = Math.max(nat, childNat);
+        }
+        return node.adjust_preferred_height(min, nat);
+    }
+
+    vfunc_allocate(box) {
+        this.set_allocation(box);
+        const content = this.get_theme_node().get_content_box(box);
+        const width = content.get_width();
+        const rtl = this.get_text_direction() === Clutter.TextDirection.RTL;
+        const {spacing, lead, apps, arrow} = this._widths();
+
+        // Lay children out from the start edge, mirrored for RTL.
+        const place = (actor, start, childWidth) => {
+            const childBox = new Clutter.ActorBox();
+            childBox.x1 = rtl
+                ? content.x2 - start - childWidth
+                : content.x1 + start;
+            childBox.x2 = childBox.x1 + childWidth;
+            childBox.y1 = content.y1;
+            childBox.y2 = content.y2;
+            actor.allocate(childBox);
+        };
+
+        if (this._showApps?.visible)
+            place(this._showApps, 0, lead - spacing);
+
+        const rest = Math.max(0, width - lead);
+        const overflowing = apps > rest + 0.5;
+        if (overflowing) {
+            const arrowSpace = arrow + spacing;
+            place(this._prevArrow, lead, arrow);
+            place(this._scrollView, lead + arrowSpace,
+                Math.max(0, rest - 2 * arrowSpace));
+            place(this._nextArrow, width - arrow, arrow);
+        } else {
+            place(this._prevArrow, lead, 0);
+            place(this._scrollView, lead, rest);
+            place(this._nextArrow, width, 0);
+        }
+
+        if (overflowing !== this._overflowing) {
+            this._overflowing = overflowing;
+            this._syncArrows();
+            if (overflowing)
+                this._queueRevealFocused();
+        }
+    }
+
+    _syncArrows() {
+        const adj = this._scrollView.hadjustment;
+        const atStart = adj.value <= adj.lower + 0.5;
+        const atEnd = adj.value >= adj.upper - adj.page_size - 0.5;
+        for (const [arrow, blocked] of [[this._prevArrow, atStart], [this._nextArrow, atEnd]]) {
+            arrow.reactive = this._overflowing && !blocked;
+            if (!this._overflowing)
+                arrow.opacity = 0;
+            else
+                arrow.opacity = blocked ? 90 : 255;
+        }
+    }
+
+    _clampScroll(value) {
+        const adj = this._scrollView.hadjustment;
+        return Math.clamp(value, adj.lower, Math.max(adj.lower, adj.upper - adj.page_size));
+    }
+
+    _scrollTo(value, animate = true) {
+        const adj = this._scrollView.hadjustment;
+        value = this._clampScroll(value);
+        adj.remove_transition('value');
+        if (!animate) {
+            this._scrollTarget = null;
+            adj.value = value;
+            return;
+        }
+        this._scrollTarget = value;
+        adj.ease(value, {
+            duration: SCROLL_ANIMATION_TIME,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                this._scrollTarget = null;
+            },
+        });
+    }
+
+    _scrollBy(delta, animate = true) {
+        const from = this._scrollTarget ?? this._scrollView.hadjustment.value;
+        this._scrollTo(from + delta, animate);
+    }
+
+    _scrollPage(direction) {
+        // Keep one button of the old view in sight as a reference point.
+        const page = this._scrollView.hadjustment.page_size;
+        this._scrollBy(direction * Math.max(this._buttonWidth(), page - this._buttonWidth()));
+    }
+
+    _buttonWidth() {
+        const button = this._appBox.get_first_child();
+        const spacing = this._appBox.get_theme_node().get_length('spacing');
+        return (button ? button.width : this.iconSize) + spacing;
+    }
+
+    _onScroll(event) {
+        if (!this._overflowing)
+            return Clutter.EVENT_PROPAGATE;
+
+        const step = this._buttonWidth();
+        switch (event.get_scroll_direction()) {
+        case Clutter.ScrollDirection.UP:
+        case Clutter.ScrollDirection.LEFT:
+            this._scrollBy(-step);
+            break;
+        case Clutter.ScrollDirection.DOWN:
+        case Clutter.ScrollDirection.RIGHT:
+            this._scrollBy(step);
+            break;
+        case Clutter.ScrollDirection.SMOOTH: {
+            const [dx, dy] = event.get_scroll_delta();
+            const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+            // A wheel notch is a delta of 1; touchpads send small, frequent
+            // deltas that should follow the fingers without easing.
+            const wheel = event.get_scroll_source() === Clutter.ScrollSource.WHEEL;
+            if (wheel)
+                this._scrollBy(delta * step);
+            else
+                this._scrollBy(delta * SMOOTH_SCROLL_PX, false);
+            break;
+        }
+        }
+        return Clutter.EVENT_STOP;
+    }
+
+    _queueRevealFocused() {
+        if (this._revealLaterId)
+            return;
+        // Wait for the buttons to be allocated before measuring them.
+        const laters = global.compositor.get_laters();
+        this._revealLaterId = laters.add(Meta.LaterType.BEFORE_REDRAW, () => {
+            this._revealLaterId = 0;
+            const focusApp = Shell.WindowTracker.get_default().focus_app;
+            const button = focusApp && this._buttons.get(focusApp);
+            if (button && this._overflowing)
+                this._reveal(button);
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _reveal(button) {
+        const adj = this._scrollView.hadjustment;
+        const {x1, x2} = button.get_allocation_box();
+        const margin = this._buttonWidth() / 2;
+        const value = this._scrollTarget ?? adj.value;
+        if (x1 < value)
+            this._scrollTo(x1 - margin);
+        else if (x2 > value + adj.page_size)
+            this._scrollTo(x2 - adj.page_size + margin);
     }
 
     get monitorIndex() {
@@ -599,6 +882,14 @@ class Taskbar extends St.BoxLayout {
             }
             button.sync();
         });
+
+        // Scroll a newly focused app into view, e.g. one just opened at
+        // the end of a long row.
+        const focusApp = Shell.WindowTracker.get_default().focus_app;
+        if (focusApp !== this._focusApp) {
+            this._focusApp = focusApp;
+            this._queueRevealFocused();
+        }
     }
 
     _refreshIcons() {
@@ -655,6 +946,16 @@ class Taskbar extends St.BoxLayout {
         const isFavorite = AppFavorites.getAppFavorites().isFavorite(source.app.get_id());
         const nFavorites = this._numFavorites() - (isFavorite && ownButton ? 1 : 0);
         pos = Math.min(pos, nFavorites);
+
+        // Near an edge of a scrolled row, bring the hidden buttons in.
+        if (this._overflowing) {
+            const adj = this._scrollView.hadjustment;
+            const edge = this._buttonWidth() / 2;
+            if (x < adj.value + edge)
+                this._scrollBy(-DRAG_SCROLL_PX, false);
+            else if (x > adj.value + adj.page_size - edge)
+                this._scrollBy(DRAG_SCROLL_PX, false);
+        }
 
         if (pos !== this._dropPos) {
             this._dropPos = pos;
@@ -736,6 +1037,12 @@ class Taskbar extends St.BoxLayout {
 
     _onDestroy() {
         this._clearDropTarget();
+        if (this._revealLaterId) {
+            global.compositor.get_laters().remove(this._revealLaterId);
+            this._revealLaterId = 0;
+        }
+        this._scrollView.hadjustment.remove_transition('value');
+        this._scrollView.hadjustment.disconnectObject(this);
         if (this._redisplayId) {
             GLib.source_remove(this._redisplayId);
             this._redisplayId = 0;

@@ -33,6 +33,31 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* The app row scrolls when it doesn't fit; fade the edge that hides apps. */
+.tideline-scroll {
+  -st-hfade-offset: 24px;
+}
+
+.tideline-scroll-arrow {
+  padding: 0 2px;
+  margin: 3px 0;
+  border-radius: 8px;
+  transition-duration: 100ms;
+}
+
+.tideline-scroll-arrow:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.tideline-scroll-arrow:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.tideline-scroll-arrow StIcon {
+  icon-size: 16px;
+  color: #ffffff;
+}
+
 .tideline-dots {
   spacing: 3px;
 }
